@@ -1,0 +1,3 @@
+
+# allow users to set (or override) flags in this '.gitignore'd file
+try-import %workspace%/.bazelrc-local
