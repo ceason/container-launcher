@@ -24,9 +24,12 @@ git_repository(
     tag = "0.15.0",
 )
 
-load("@io_bazel_rules_docker//container:container.bzl", "repositories")
+load(
+    "@io_bazel_rules_docker//python:image.bzl",
+    _py_image_repos = "repositories",
+)
 
-repositories()
+_py_image_repos()
 
 load("@io_bazel_rules_go//go:def.bzl", "go_register_toolchains", "go_rules_dependencies")
 

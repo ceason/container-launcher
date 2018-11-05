@@ -1,3 +1,4 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/ceason/container-launcher
@@ -21,4 +22,11 @@ EOF""",
         "@bazel_gazelle//cmd/gazelle",
         "@com_github_golang_dep//cmd/dep",
     ],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["launcher.go"],
+    importpath = "github.com/ceason/container-launcher",
+    visibility = ["//visibility:public"],
 )
