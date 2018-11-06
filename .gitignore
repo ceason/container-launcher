@@ -1,2 +1,4 @@
 
 .bazelrc-local
+/.ijwb
+/bazel-*
