@@ -1,34 +1,24 @@
 load("@io_bazel_rules_docker//container:image.bzl", "container_image")
 load("@rules_terraform//terraform:def.bzl", "terraform_integration_test", "terraform_module", "terraform_workspace")
 load("@rules_terraform//terraform:container.bzl", "image_embedder", "terraform_k8s_manifest")
-#load("@io_bazel_rules_docker//python:image.bzl", "py_image")
-load("//python:image.bzl", "py_image")
+load("@io_bazel_rules_docker//python:image.bzl", "py_image")
 
 # e2e will test:
 # - populating ENV vars
 # - populating files on disk
 
 py_image(
-    name = "py_image",
+    name = "server",
     srcs = ["server.py"],
-    main = "server.py",
+    launcher = "//cmd/container-launcher",
 )
-
-#container_image(
-#    name = "py_image_withlauncher",
-#    entrypoint = [
-#        "/container-launcher",
-#        "/usr/bin/python",
-#    ],
-#    layers = ["//cmd/container-launcher:layer"],
-#)
 
 terraform_k8s_manifest(
     name = "k8s-deployment",
     srcs = ["server.yaml"],
     image_chroot = "$(IMAGE_CHROOT)",
     images = {
-        "hello-world-server:dev": ":py_image",
+        "hello-world-server:dev": ":server",
     },
 )
 
@@ -38,7 +28,7 @@ terraform_workspace(
         "e2e.tf",
         "k8s.tf",
     ],
-    embed = ["k8s-deployment"],
+    embed = [":k8s-deployment"],
 )
 
 sh_test(

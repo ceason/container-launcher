@@ -15,7 +15,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/ceason/container-launcher/cmd/container-launcher",
     visibility = ["//visibility:private"],
-    deps = ["//vendor/github.com/golang/glog:go_default_library"],
+    deps = [
+        "//:go_default_library",
+        "//vendor/github.com/golang/glog:go_default_library",
+    ],
 )
 
 go_binary(
