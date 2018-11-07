@@ -34,4 +34,10 @@ go_library(
     ],
     importpath = "github.com/ceason/container-launcher",
     visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3/s3manager:go_default_library",
+    ],
 )

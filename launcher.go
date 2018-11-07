@@ -108,8 +108,13 @@ func getValue(url string) (string, error) {
 	if strings.HasPrefix(url, "arn:aws:secretsmanager:") {
 		return getValue_awsSecretsmanager(url)
 	}
-	if strings.HasPrefix(url, "arn:aws:s3:") {
-		return getValue_awsS3(url)
+	if strings.HasPrefix(url, "s3://") {
+		trimmed := strings.TrimPrefix(url, "s3://")
+		parts := strings.SplitN(trimmed, "/", 2)
+		if len(parts) != 2 {
+			return "", errors.New(fmt.Sprintf("Invalid S3 URI '%s' expected 's3://<bucket>/<key>'", url))
+		}
+		return getValue_awsS3(parts[0], parts[1])
 	}
 	if strings.HasPrefix(url, "arn:aws:ssm:") {
 		return getValue_awsSsm(url)

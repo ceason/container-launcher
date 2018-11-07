@@ -5,6 +5,7 @@ run:publish --stamp=yes
 # pass through provider-relevant vars for terraform_integration_tests
 test --test_env=KUBECONFIG
 test --test_env=AWS_PROFILE
+test --test_env=AWS_REGION
 test --test_env=AWS_DEFAULT_REGION
 test --test_env=AWS_ACCESS_KEY_ID
 test --test_env=AWS_SECRET_ACCESS_KEY
