@@ -12,7 +12,6 @@ genrule(
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$$BUILD_WORKSPACE_DIRECTORY"
-rm -rf .ijwb/.gopath # dep will break if these intellij project files are present
 $(location @com_github_golang_dep//cmd/dep) ensure
 $(location @bazel_gazelle//cmd/gazelle) update
 git add Gopkg.{lock,toml} vendor/. $$(find . -name BUILD -o -name BUILD.bazel)

@@ -1,6 +1,7 @@
-build       --define IMAGE_CHROOT=registry.kube-system.svc.cluster.local:80
-run:publish --define IMAGE_CHROOT=index.docker.io/netchris
+build       --define IMAGE_REGISTRY=registry.kube-system.svc.cluster.local:80
 run:publish --stamp=yes
+
+test --test_output=errors
 
 # pass through provider-relevant vars for terraform_integration_tests
 test --test_env=KUBECONFIG

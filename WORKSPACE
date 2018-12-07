@@ -2,13 +2,13 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "rules_terraform",
-    commit = "840e35e04c2c5be4f733b9aec518181fd8bd8374",
+    commit = "06305348d84f2d6265e4d7278aa104ca611240ba",
     remote = "git@github.com:ceason/rules_terraform.git",
 )
 
 git_repository(
     name = "io_bazel_rules_docker",
-    commit = "82b38c6845fd764315eb6fe53d02e85251fd1ed8",
+    commit = "f0cd1fccefaaad3b63781b08230649687c8a2261",
     remote = "git@github.com:ceason/rules_docker.git",
 )
 
