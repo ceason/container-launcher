@@ -11,20 +11,40 @@ import (
 )
 
 var (
-	handlers       []Handler
-	launcherPrefix = flag.String("containerlauncher-prefix", "containerlauncher", "Environment variable values starting with '<containerlauncher-prefix>:' will be resolved")
+	handlers           []SecretResolver
+	launcherPrefix     = flag.String("containerlauncher-prefix", "containerlauncher", "Environment variable values starting with '<containerlauncher-prefix>:' will be resolved")
+	NoMatchingResolver = errors.New("no matching SecretResolver")
 )
 
 // syntax is... "launcherPrefix:[optionalFilePath]:valueToResolve"
 
-type Handler interface {
+type SecretResolver interface {
 	IsDefinedAt(str string) bool
 	Resolve(str string, w io.Writer) error
 	UsageText() string
 }
 
-func RegisterHandler(h Handler) {
+func RegisterResolver(h SecretResolver) {
 	handlers = append(handlers, h)
+}
+
+// Get help/usage text for all registered handlers
+func GetRegisteredResolvers() (usageText []string) {
+	for _, h := range handlers {
+		usageText = append(usageText, h.UsageText())
+	}
+	return
+}
+
+// resolves using the first matching handler
+func resolve(str string, w io.Writer) error {
+	// find first matching handler
+	for _, h := range handlers {
+		if h.IsDefinedAt(str) {
+			return h.Resolve(str, w)
+		}
+	}
+	return NoMatchingResolver
 }
 
 // Return `os.Environ` with all containerlauncher references resolved.
@@ -73,18 +93,6 @@ func Environ() ([]string, error) {
 			// file has been written, so set env var to the path where we wrote the file
 			resolved = append(resolved, fmt.Sprintf("%s=%s", name, filePath))
 		}
-		panic("Unreachable")
 	}
 	return resolved, nil
-}
-
-// resolves using the first matching handler
-func resolve(str string, w io.Writer) error {
-	// find first matching handler
-	for _, h := range handlers {
-		if h.IsDefinedAt(str) {
-			return h.Resolve(str, w)
-		}
-	}
-	return nil
 }
