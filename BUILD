@@ -25,12 +25,10 @@ EOF""",
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "aws_s3.go",
-        "aws_secretsmanager.go",
-        "aws_ssm.go",
-        "launcher.go",
-    ],
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
     importpath = "github.com/ceason/container-launcher",
     visibility = ["//visibility:public"],
     deps = [

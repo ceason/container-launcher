@@ -11,23 +11,6 @@ import (
 	"strings"
 )
 
-func getValue_awsS3(bucket, item string) (string, error) {
-	sess, err := session.NewSession()
-	if err != nil {
-		return "", err
-	}
-	buf := aws.NewWriteAtBuffer([]byte{})
-	downloader := s3manager.NewDownloader(sess)
-	_, err = downloader.Download(buf, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(item),
-	})
-	if err != nil {
-		return "", err
-	}
-	return string(buf.Bytes()), nil
-}
-
 func init() {
 	RegisterResolver(&s3Resolver{})
 }
@@ -57,7 +40,7 @@ func (s *s3Resolver) Resolve(str string, w io.WriterAt) error {
 	trimmed := strings.TrimPrefix(str, "s3://")
 	parts := strings.SplitN(trimmed, "/", 2)
 	if len(parts) != 2 {
-		return errors.New(fmt.Sprintf("Invalid S3 URI '%s' expected 's3://<bucket>/<key>'", url))
+		return errors.New(fmt.Sprintf("Invalid S3 URI '%s' expected 's3://<bucket>/<key>'", str))
 	}
 	_, err := s.downloader.Download(w, &s3.GetObjectInput{
 		Bucket: aws.String(parts[0]),
