@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"io"
 	"os"
 	"path"
@@ -20,7 +21,7 @@ var (
 
 type SecretResolver interface {
 	IsDefinedAt(str string) bool
-	Resolve(str string, w io.Writer) error
+	Resolve(str string, w io.WriterAt) error
 	UsageText() string
 }
 
@@ -37,7 +38,7 @@ func GetRegisteredResolvers() (usageText []string) {
 }
 
 // resolves using the first matching handler
-func resolve(str string, w io.Writer) error {
+func resolve(str string, w io.WriterAt) error {
 	// find first matching handler
 	for _, h := range handlers {
 		if h.IsDefinedAt(str) {
@@ -70,13 +71,13 @@ func Environ() ([]string, error) {
 		resolvableStr := vparts[2]
 		// resolve to an env var if no file path was given
 		if filePath == "" {
-			buf := strings.Builder{}
-			err := resolve(resolvableStr, &buf)
+			buf := aws.NewWriteAtBuffer([]byte{})
+			err := resolve(resolvableStr, buf)
 			if err != nil {
 				return nil, err
 			}
 			// set env var to the resolved value
-			resolved = append(resolved, fmt.Sprintf("%s=%s", name, buf.String()))
+			resolved = append(resolved, fmt.Sprintf("%s=%s", name, string(buf.Bytes())))
 		} else {
 			err := os.MkdirAll(path.Dir(filePath), os.ModePerm)
 			if err != nil {
