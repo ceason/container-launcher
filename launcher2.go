@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/golang/glog"
 	"io"
 	"os"
 	"path"
@@ -54,10 +55,15 @@ func resolve(str string, w io.WriterAt) error {
 func Environ() ([]string, error) {
 	var resolved []string
 	for _, v := range os.Environ() {
-		parts := strings.SplitN(v, "=", 1)
+		parts := strings.SplitN(v, "=", 2)
+		if len(parts) != 2 {
+			glog.Warningf("Somehow this env var didn't split to two parts... '%s'", v)
+			resolved = append(resolved, v)
+			continue
+		}
 		name := parts[0]
 		value := parts[1]
-		vparts := strings.SplitN(value, ":", 2)
+		vparts := strings.SplitN(value, ":", 3)
 		prefix := vparts[0]
 		// skip stuff that doesn't match the required prefix
 		if prefix != *launcherPrefix {

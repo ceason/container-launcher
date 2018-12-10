@@ -2,7 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "rules_terraform",
-    commit = "06305348d84f2d6265e4d7278aa104ca611240ba",
+    commit = "7bb4a94fa6f89493a5162511dafabbf4df64a724",
     remote = "git@github.com:ceason/rules_terraform.git",
 )
 

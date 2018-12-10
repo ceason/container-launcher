@@ -20,6 +20,6 @@ func (contentResolver) UsageText() string {
 }
 
 func (contentResolver) Resolve(str string, w io.WriterAt) error {
-	_, err := w.WriteAt([]byte(str), 0)
+	_, err := w.WriteAt([]byte(strings.TrimPrefix(str, "content:")), 0)
 	return err
 }
