@@ -1,123 +1,105 @@
 package container_launcher
 
 import (
-	"os"
-	"strings"
 	"errors"
+	"flag"
 	"fmt"
-	"path/filepath"
-	"io/ioutil"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/golang/glog"
+	"io"
+	"os"
+	"path"
+	"strings"
 )
 
-const (
-	itemDelimiter      = "\n"
-	kvDelimiter        = "="
-	EnvironmentEnvName = "CONTAINERLAUNCHER_ENVIRONMENT"
-	FilesEnvName       = "CONTAINERLAUNCHER_FILES"
+var (
+	handlers           []SecretResolver
+	launcherPrefix     = flag.String("containerlauncher-prefix", "containerlauncher", "Environment variable values starting with '<containerlauncher-prefix>:' will be resolved")
+	NoMatchingResolver = errors.New("no matching SecretResolver")
 )
 
-type launcher struct {
-	files       map[string]string
-	environment map[string]string
-	argv        []string
-	envv        []string
+// syntax is... "launcherPrefix:[optionalFilePath]:valueToResolve"
+
+type SecretResolver interface {
+	IsDefinedAt(str string) bool
+	Resolve(str string, w io.WriterAt) error
+	UsageText() string
 }
 
-func NewFromEnvironment() (*launcher, error) {
-	// pass through all non-containerlauncher env vars
-	var envv []string
-	for _, value := range os.Environ() {
-		if strings.HasPrefix(value, EnvironmentEnvName+"=") ||
-			strings.HasPrefix(value, FilesEnvName+"=") {
-			continue
-		}
-		envv = append(envv, value)
-	}
-	launcher := &launcher{
-		files:       make(map[string]string),
-		environment: make(map[string]string),
-		argv:        os.Args[1:],
-		envv:        envv,
-	}
-	if val, ok := os.LookupEnv(EnvironmentEnvName); ok {
-		for _, item := range strings.Split(val, itemDelimiter) {
-			if item == "" {
-				continue
-			}
-			parts := strings.SplitN(item, kvDelimiter, 2)
-			if len(parts) != 2 {
-				return nil, errors.New(fmt.Sprintf("Must get environment vars in format <name>=<value> but got '%s'", item))
-			}
-			launcher.environment[parts[0]] = parts[1]
-		}
-	}
-	if val, ok := os.LookupEnv(FilesEnvName); ok {
-		for _, item := range strings.Split(val, itemDelimiter) {
-			if item == "" {
-				continue
-			}
-			parts := strings.SplitN(item, kvDelimiter, 2)
-			if len(parts) != 2 {
-				return nil, errors.New(fmt.Sprintf("Must get file vars in format <name>=<value> but got '%s'", item))
-			}
-			launcher.files[parts[0]] = parts[1]
-		}
-	}
-	return launcher, nil
+func RegisterResolver(h SecretResolver) {
+	handlers = append(handlers, h)
 }
 
-func (l launcher) GetExecArgs() (argv0 string, argv []string, envv []string, error error) {
-	argv0 = l.argv[0]
-	argv = l.argv
-	envv = l.envv
-
-	// resolve values for env vars
-	for key, value := range l.environment {
-		resolved, err := getValue(value)
-		if err != nil {
-			return
-		}
-		envv = append(envv, fmt.Sprintf("%s=%s", key, resolved))
+// Get help/usage text for all registered handlers
+func GetRegisteredResolvers() (usageText []string) {
+	for _, h := range handlers {
+		usageText = append(usageText, h.UsageText())
 	}
-	// place files as appropriate
-	for filename, value := range l.files {
-		content, err := getValue(value)
-		if err != nil {
-			error = err
-			return
-		}
-		err = os.MkdirAll(filepath.Dir(filename), 0755)
-		if err != nil {
-			error = errors.New(fmt.Sprintf("Error creating dir for file '%s': %s", filename, err.Error()))
-			return
-		}
-		err = ioutil.WriteFile(filename, []byte(content), 0644)
-		if err != nil {
-			error = errors.New(fmt.Sprintf("Error writing file '%s': %s", filename, err.Error()))
-			return
-		}
-	}
-
 	return
 }
 
-func getValue(url string) (string, error) {
-	if strings.HasPrefix(url, "content:") {
-		return strings.TrimPrefix(url, "content:"), nil
-	}
-	if strings.HasPrefix(url, "arn:aws:secretsmanager:") {
-		return getValue_awsSecretsmanager(url)
-	}
-	if strings.HasPrefix(url, "s3://") {
-		trimmed := strings.TrimPrefix(url, "s3://")
-		parts := strings.SplitN(trimmed, "/", 2)
-		if len(parts) != 2 {
-			return "", errors.New(fmt.Sprintf("Invalid S3 URI '%s' expected 's3://<bucket>/<key>'", url))
+// resolves using the first matching handler
+func resolve(str string, w io.WriterAt) error {
+	// find first matching handler
+	for _, h := range handlers {
+		if h.IsDefinedAt(str) {
+			return h.Resolve(str, w)
 		}
-		return getValue_awsS3(parts[0], parts[1])
 	}
-	if strings.HasPrefix(url, "arn:aws:ssm:") {
-		return getValue_awsSsm(url)
+	return NoMatchingResolver
+}
+
+// Return `os.Environ` with all containerlauncher references resolved.
+// Will re-resolve each time it's invoked, so you probably want to reuse the
+// result instead of calling this multiple times.
+func Environ() ([]string, error) {
+	var resolved []string
+	for _, v := range os.Environ() {
+		parts := strings.SplitN(v, "=", 2)
+		if len(parts) != 2 {
+			glog.Warningf("Somehow this env var didn't split to two parts... '%s'", v)
+			resolved = append(resolved, v)
+			continue
+		}
+		name := parts[0]
+		value := parts[1]
+		vparts := strings.SplitN(value, ":", 3)
+		prefix := vparts[0]
+		// skip stuff that doesn't match the required prefix
+		if prefix != *launcherPrefix {
+			resolved = append(resolved, v)
+			continue
+		}
+		if len(vparts) != 3 {
+			return nil, errors.New(fmt.Sprintf("Expected format '<launcherPrefix>:[optionalFilePath]:...' but got '%s' for var '%s'", value, name))
+		}
+		filePath := vparts[1]
+		resolvableStr := vparts[2]
+		// resolve to an env var if no file path was given
+		if filePath == "" {
+			buf := aws.NewWriteAtBuffer([]byte{})
+			err := resolve(resolvableStr, buf)
+			if err != nil {
+				return nil, err
+			}
+			// set env var to the resolved value
+			resolved = append(resolved, fmt.Sprintf("%s=%s", name, string(buf.Bytes())))
+		} else {
+			err := os.MkdirAll(path.Dir(filePath), os.ModePerm)
+			if err != nil {
+				return nil, err
+			}
+			f, err := os.Create(filePath)
+			if err != nil {
+				return nil, err
+			}
+			err = resolve(resolvableStr, f)
+			if err != nil {
+				return nil, err
+			}
+			// file has been written, so set env var to the path where we wrote the file
+			resolved = append(resolved, fmt.Sprintf("%s=%s", name, filePath))
+		}
 	}
-	return "", errors.New(fmt.Sprintf("Unrecognized url '%s'", url))
+	return resolved, nil
 }

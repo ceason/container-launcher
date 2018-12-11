@@ -6,6 +6,6 @@ resource kubernetes_config_map hello_world_server {
   }
 
   data {
-    CUSTOM_SERVER_MESSAGE_FILE = "containerlauncher:${local.test_message_file}:content:${local.test_message}"
+    CUSTOM_SERVER_MESSAGE = "containerlauncher::content:${local.test_message}"
   }
 }

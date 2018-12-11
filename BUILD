@@ -25,12 +25,10 @@ EOF""",
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "aws_s3.go",
-        "aws_secretsmanager.go",
-        "aws_ssm.go",
-        "launcher.go",
-    ],
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
     importpath = "github.com/ceason/container-launcher",
     visibility = ["//visibility:public"],
     deps = [
@@ -38,5 +36,6 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/service/s3:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/service/s3/s3manager:go_default_library",
+        "//vendor/github.com/golang/glog:go_default_library",
     ],
 )
