@@ -3,11 +3,17 @@ import os
 
 PORT_NUMBER = 8080
 
-if "CUSTOM_SERVER_MESSAGE_FILE" not in os.environ:
-    raise ValueError("Missing required environment variable 'CUSTOM_SERVER_MESSAGE_FILE'")
+SERVER_MESSAGE = None
 
-with open(os.environ["CUSTOM_SERVER_MESSAGE_FILE"], "r") as f:
-    SERVER_MESSAGE = f.read()
+if "CUSTOM_SERVER_MESSAGE_FILE" in os.environ and "CUSTOM_SERVER_MESSAGE" in os.environ:
+    raise ValueError("May only specify one of 'CUSTOM_SERVER_MESSAGE_FILE' or 'CUSTOM_SERVER_MESSAGE'")
+elif "CUSTOM_SERVER_MESSAGE_FILE" in os.environ:
+    with open(os.environ["CUSTOM_SERVER_MESSAGE_FILE"], "r") as f:
+        SERVER_MESSAGE = f.read()
+elif "CUSTOM_SERVER_MESSAGE" in os.environ:
+    SERVER_MESSAGE = os.environ["CUSTOM_SERVER_MESSAGE"]
+else:
+    raise ValueError("Must specify at least one of 'CUSTOM_SERVER_MESSAGE_FILE' or 'CUSTOM_SERVER_MESSAGE'")
 
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
