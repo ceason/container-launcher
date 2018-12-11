@@ -1,7 +1,7 @@
 load("@rules_terraform//experimental:publishing.bzl", "ghrelease_assets", "ghrelease_publisher", "ghrelease_test_suite")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
-VERSION = "0.1"
+VERSION = "0.2"
 
 ghrelease_publisher(
     name = "release",
