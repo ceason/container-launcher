@@ -4,12 +4,12 @@ load("@rules_terraform//experimental:k8s.bzl", "terraform_k8s_manifest")
 load("@io_bazel_rules_docker//container:container.bzl", "container_push")
 load("@io_bazel_rules_docker//python:image.bzl", "py_image")
 
+
 # One test file for each type of backend (we'll
 # do an e2e test of each)
 TEST_FILES = [
     "s3.tf",
     "content.tf",
-    "content-env.tf",
 ]
 
 # e2e will test:

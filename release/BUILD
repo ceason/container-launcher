@@ -18,7 +18,6 @@ ghrelease_test_suite(
     tests = [
         "//...",
         "//tests/e2e:content-e2e_integration_test",
-        "//tests/e2e:content-env-e2e_integration_test",
         "//tests/e2e:s3-e2e_integration_test",
     ],
 )

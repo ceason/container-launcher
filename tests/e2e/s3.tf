@@ -4,10 +4,15 @@ resource kubernetes_config_map hello_world_server {
     namespace = "${data.kubectl_namespace.current.id}"
   }
   data {
-    CUSTOM_SERVER_MESSAGE_FILE = "containerlauncher:${local.test_message_file}:s3://${aws_s3_bucket.config.bucket}/${aws_s3_bucket_object.custom_message.id}"
-    AWS_ACCESS_KEY_ID          = "${aws_iam_access_key.testuser.id}"
-    AWS_SECRET_ACCESS_KEY      = "${aws_iam_access_key.testuser.secret}"
-    AWS_REGION                 = "${data.aws_region.current.name}"
+    CONTAINERLAUNCHER_ENVIRONMENT = <<EOF
+CUSTOM_SERVER_MESSAGE_FILE=content:${local.test_message_file}
+EOF
+    CONTAINERLAUNCHER_FILES       = <<EOF
+${local.test_message_file}=s3://${aws_s3_bucket.config.bucket}/${aws_s3_bucket_object.custom_message.id}
+EOF
+    AWS_ACCESS_KEY_ID             = "${aws_iam_access_key.testuser.id}"
+    AWS_SECRET_ACCESS_KEY         = "${aws_iam_access_key.testuser.secret}"
+    AWS_REGION                    = "${data.aws_region.current.name}"
   }
 }
 

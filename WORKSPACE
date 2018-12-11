@@ -2,7 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "rules_terraform",
-    commit = "7bb4a94fa6f89493a5162511dafabbf4df64a724",
+    commit = "06305348d84f2d6265e4d7278aa104ca611240ba",
     remote = "git@github.com:ceason/rules_terraform.git",
 )
 
@@ -15,7 +15,7 @@ git_repository(
 git_repository(
     name = "io_bazel_rules_go",
     remote = "https://github.com/bazelbuild/rules_go.git",
-    tag = "0.16.3",
+    tag = "0.16.1",
 )
 
 git_repository(
@@ -24,26 +24,26 @@ git_repository(
     tag = "0.15.0",
 )
 
-load("@io_bazel_rules_go//go:def.bzl", "go_register_toolchains", "go_rules_dependencies")
-
-go_rules_dependencies()
-
-go_register_toolchains()
-
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
-
-gazelle_dependencies()
-
-load("@rules_terraform//terraform:dependencies.bzl", "terraform_repositories")
-
-terraform_repositories()
-
 load(
     "@io_bazel_rules_docker//python:image.bzl",
     _py_image_repos = "repositories",
 )
 
 _py_image_repos()
+
+load("@io_bazel_rules_go//go:def.bzl", "go_register_toolchains", "go_rules_dependencies")
+
+go_rules_dependencies()
+
+go_register_toolchains()
+
+load("@rules_terraform//terraform:dependencies.bzl", "terraform_repositories")
+
+terraform_repositories()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+
+gazelle_dependencies()
 
 go_repository(
     name = "com_github_golang_dep",

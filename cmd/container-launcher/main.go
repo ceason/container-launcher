@@ -1,25 +1,25 @@
 package main
 
 import (
+	"syscall"
+	"github.com/golang/glog"
 	"flag"
 	"github.com/ceason/container-launcher"
-	"github.com/golang/glog"
-	"syscall"
 )
 
 func main() {
-	flag.Set("logtostderr", "true")
 	flag.Parse()
+	glog.Infof("Launching this with special launcher!")
 
-	glog.V(0).Info("Launching with container-launcher")
-	argv := flag.Args()
-	envv, err := container_launcher.Environ()
+	launcher, err := container_launcher.NewFromEnvironment()
 	if err != nil {
 		glog.Fatalf(err.Error())
 	}
-	glog.V(1).Infof("Executing '%s' with args '%v' and environment '%v'", argv[0], argv[1:], envv)
-	err = syscall.Exec(argv[0], argv, envv)
+	argv0, argv, envv, err := launcher.GetExecArgs()
 	if err != nil {
-		glog.Fatal(err)
+		glog.Fatalf(err.Error())
 	}
+	glog.Infof("Execiting '%s' with args '%v' and environment '%v'", argv0, argv, envv)
+	syscall.Exec(argv0, argv, envv)
+
 }
