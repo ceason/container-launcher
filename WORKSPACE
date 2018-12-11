@@ -20,8 +20,8 @@ git_repository(
 
 git_repository(
     name = "bazel_gazelle",
+    commit = "44ce230b3399a5d4472198740358fcd825b0c3c9",
     remote = "https://github.com/bazelbuild/bazel-gazelle.git",
-    tag = "0.15.0",
 )
 
 load("@io_bazel_rules_go//go:def.bzl", "go_register_toolchains", "go_rules_dependencies")
